@@ -1,15 +1,13 @@
 ### Main interest: food insecurity, health, food assistance
 - Breakdown by: children / families / seniors
 - Overlay: socioeconomic, demographic data
-
-* Look for correlations
+- Look for correlations
+- Sometimes there is time series data
 
 ### Issues
 - Missing data (by county)
     - How to aggregate data (mean, median, etc.)
 - Time of collection for different variables don't always sync up
-
-* Sometimes there is time series data
 
 ### Other data to find:
 - Population: total, children, seniors
