@@ -11,6 +11,7 @@
 
 ### Other data to find:
 - Population: total, children, seniors
+- !["noncensus"](https://cran.r-project.org/web/packages/noncensus/noncensus.pdf) package in R has useful state, county, and zip-level data!
 - Can overlay data from Google Maps API: need to explore more, try to find "food deserts"
 
 ### We think not so related:
