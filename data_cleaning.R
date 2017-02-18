@@ -43,3 +43,6 @@ all_data <- full_join(all_data, prices_taxes, by = 'FIPS')
 all_data <- full_join(all_data, restaurants, by = 'FIPS')
 all_data <- full_join(all_data, socioeconomic, by = 'FIPS')
 all_data <- full_join(all_data, stores, by = 'FIPS')
+
+########## Write joined data to csv ##########
+write_csv(all_data, '/Users/rachelhz/projects/food_environ_atlas_analysis/fea_02182017.csv')
