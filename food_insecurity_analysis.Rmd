@@ -1,0 +1,109 @@
+---
+title: "food_insecurity_analysis"
+output: html_document
+---
+### Load in data
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(ggmap)
+```
+
+
+```{r}
+file <- '/Users/rachelhz/projects/food_environ_atlas_analysis/food_environment_atlas_2015.xls'
+insecurity <- read_excel(file, sheet = 'INSECURITY')
+```
+
+```{r}
+str(insecurity)
+# Plot food insecurity rates (children) by years
+ggplot(insecurity) + 
+  geom_boxplot(aes(x = 1, y = FOODINSEC_CHILD_01_07)) +
+  geom_boxplot(aes(x = 2, y = FOODINSEC_CHILD_03_11))
+# Plot food insecurity rates (children) by years against each other
+ggplot(insecurity, aes(x = FOODINSEC_CHILD_01_07, y = FOODINSEC_CHILD_03_11)) + geom_point(alpha = 0.3)
+```
+```{r}
+assistance <- read_excel(file, sheet = 'ASSISTANCE')
+```
+
+```{r}
+head(assistance)
+```
+
+```{r}
+#install.packages("ggmap", type = "source")
+```
+
+```{r}
+### Plot by state ###
+
+# Bring in lat/long data by state name
+state_geo <- map_data("state")
+head(state_geo)
+# Bring in state names and abbreviations
+data(state)
+state_abbrevs <- tibble(abb = state.abb, region = tolower(state.name))
+# Merge to match state abbreviations with lat/long
+state_df <- full_join(state_geo, state_abbrevs, by = "region")
+
+# Summarize 'df' by State using 'group_by_function' on 'feature', then plot by state
+# Note: 'df' must have a column of state abbrevs called 'State'
+
+assistance %>% 
+  group_by(State) %>% 
+  summarise(summ_feature = mean(PCT_SNAP14)) ->
+  feature_df
+
+##### look into heatmap
+
+state_feature <- full_join(state_df, feature_df, by = c('abb' = 'State'))
+
+ggplot(state_feature, aes(x = long, y = lat, fill = summ_feature, group = group)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+  coord_fixed(1.3)
+```
+
+
+### The package 'noncensus' has population and other relevant data for counties and zip codes!!! https://cran.r-project.org/web/packages/noncensus/noncensus.pdf
+
+```{r}
+### This didn't work and takes forever! ###
+# Try bringing in FIPS (county) level geo data
+require(noncensus)
+
+data("zip_codes")
+zip_codes$fips <- as.character(zip_codes$fips)
+assistance_zip <- full_join(zip_codes, select(assistance, FIPS, State, County, REDEMP_SNAPS12), by = c('fips' = 'FIPS'))
+
+# See if we can plot something by county
+# Clearly, we're missing a lot of data
+ggplot(assistance_zip, aes(x = longitude, y = latitude, fill = REDEMP_SNAPS12)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+  coord_fixed(1.3)
+
+# Things to do to get per capita data by county, and plot by county
+data("counties") # Can use this to get county population!
+# 1. Make a FIPS column
+counties <- mutate(counties, fips = paste(state_fips, county_fips, sep = ''))
+# 2. Create a 'group' column in counties so that plotting happens by county
+counties <- mutate(counties, group = 1:nrow(counties))
+# 3. Merge counties and assistance data by FIPS
+assistance_county <- full_join(assistance, counties, by = c('FIPS' = 'fips'))
+# 4. Create new column if need be
+assistance_county <- mutate(assistance_county, PCREDEMP_SNAPS12 = REDEMP_SNAPS12 / population)
+# (Or plot PC_SNAPBEN08, which has per capita data already and little missing data)
+# 5. Merge with zip code lat/lon data
+assistance_county_geo <- full_join(assistance_county, zip_codes, by = c('FIPS' = 'fips'))
+# 6. Plot!
+ggplot(assistance_county_geo, aes(x = longitude, y = latitude, fill = PC_SNAPBEN08, group = group)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+  coord_fixed(1.3)
+```
+
