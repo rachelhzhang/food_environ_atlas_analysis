@@ -54,6 +54,15 @@
 ### Other cool stuff:
 - Add government data / press releases and news articles to tell our story for the final presentation
 
+### To-do's for 2/28:
+- M, R: Zoom into the few states with high food insecurity
+  - M: MS, AL; R: AR, TX
+  - Look at which features correlate most with insecurity, then test on other states
+  - Find states with insecurity at state level, then zoom into county-level data
+  - Compare counties, find similarities/differences
+- S: Go through SNAP reports and find graphs/relationships for us to test against
+- R: figure out how to plot by county
+
 ### To-do's for 2/24:
 - R: Full join for only the vars we want, look at 'Questions'
 - S: Research SNAP, which vars should we look at
