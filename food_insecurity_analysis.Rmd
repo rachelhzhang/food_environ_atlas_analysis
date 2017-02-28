@@ -69,7 +69,7 @@ ggplot(state_feature, aes(x = long, y = lat, fill = summ_feature, group = group)
 ```
 
 
-### The package 'noncensus' has population and other relevant data for counties and zip codes!!! https://cran.r-project.org/web/packages/noncensus/noncensus.pdf
+Use the package 'noncensus' has population and other relevant data for counties and zip codes!!! https://cran.r-project.org/web/packages/noncensus/noncensus.pdf
 
 ```{r}
 ### This didn't work and takes forever! ###
