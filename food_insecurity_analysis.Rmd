@@ -8,9 +8,113 @@ output: html_document
 library(tidyverse)
 library(readxl)
 library(ggplot2)
+#install.packages("ggmap", type = "source")
 library(ggmap)
 ```
 
+```{r}
+# Read in data
+fea <- read_csv('fea_02182017.csv')
+colnames(fea)
+```
+
+AR and TX are two states with high food insecurity.  Look at these states and examine:
+* Note: insecurity values are at the state level
+* Which features correlate most with insecurity
+* How insecurity and other variables vary at the county level
+
+```{r}
+# Subset the data to only AR and/or TX
+fea_ARTX <- filter(fea, State == 'AR' | State == 'TX')
+fea_AR <- filter(fea, State == 'AR')
+fea_TX <- filter(fea, State == 'TX')
+```
+
+Plotting on map does not show enough differentiation between FIPS areas
+
+```{r}
+library(noncensus)
+data("zip_codes")
+#zip_codes$fips <- as.character(zip_codes$fips)
+head(zip_codes)
+fea_AR$FIPS <- as.numeric(fea_AR$FIPS)
+fea_AR_geo <- left_join(fea_AR, zip_codes, by = c('FIPS' = 'fips'))
+
+ggplot(fea_AR_geo, aes(x = longitude, y = latitude, fill = GROCPTH12)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar") +
+  coord_fixed(1.3)
+```
+
+Use histograms to explore county-level data (PCT_LACCESS_POP10, PCT_LACCESS_LOWI10, REDEMP_SNAPS12, FFRPTH12, PCT_NHWHITE10, MEDHHINC10, METRO13, GROCPTH12, SUPERCPTH12)
+```{r}
+ggplot(fea_ARTX, aes(MEDHHINC10, fill = State)) + geom_histogram()
+```
+
+Actually, it's more helpful to compare against the US (**or maybe top insecurity states vs lowest insecurity states**)
+
+Look at food insecurity across time
+
+```{r}
+# Could tidy up the data to make this plot better
+# Note: jump in time between 00-02 and 07-09
+ggplot() + 
+  geom_point(data = fea_ARTX, aes(x = State, y = FOODINSEC_00_02), color = 'red') + 
+  geom_boxplot(data = fea, aes(x = 'US 00-02', y = FOODINSEC_00_02), color = 'red') + 
+  geom_point(data = fea_ARTX, aes(x = State, y = FOODINSEC_07_09), color = 'green') + 
+  geom_boxplot(data = fea, aes(x = 'US 07-09', y = FOODINSEC_07_09), color = 'green') + 
+  geom_point(data = fea_ARTX, aes(x = State, y = FOODINSEC_10_12), color = 'blue') + 
+  geom_boxplot(data = fea, aes(x = 'US 10-12', y = FOODINSEC_10_12), color = 'blue')
+```
+
+### Other variables tried out (only showing graphs of interest):
+* Some differentiation: MEDHHINC10, POVRATE10, CHILDPOVRATE10, MILK_PRICE10 (sample size too small), FOOD_TAX11, PC_FFRSALES07, PC_FSRSALES07
+* No differentiation: PCT_LACCESS_POP10, PCT_LACCESS_LOWI10, REDEMP_SNAPS12, FFRPTH12, FSRPTH12, GROCPTH12, SUPERCPTH12, PCT_65OLDER10, PCT_18YOUNGER10, SNAPSPTH12
+
+```{r}
+ggplot() + 
+  geom_boxplot(data = fea_ARTX, aes(x = State, y = MEDHHINC10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = MEDHHINC10))
+```
+
+```{r}
+ggplot() + 
+  geom_boxplot(data = fea_ARTX, aes(x = State, y = POVRATE10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = POVRATE10))
+```
+
+```{r}
+ggplot() + 
+  geom_boxplot(data = fea_ARTX, aes(x = State, y = CHILDPOVRATE10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = CHILDPOVRATE10))
+```
+
+```{r}
+# Can use diverging color scheme / stacked bar chart for above/below
+ggplot() + 
+  geom_point(data = fea_ARTX, aes(x = State, y = MILK_PRICE10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = MILK_PRICE10))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = fea_ARTX, aes(x = State, y = FOOD_TAX11)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = FOOD_TAX11))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = fea_ARTX, aes(x = State, y = PC_FFRSALES07)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = PC_FFRSALES07))
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = fea_ARTX, aes(x = State, y = PC_FSRSALES07)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = PC_FSRSALES07))
+```
+
+### Older stuff
 
 ```{r}
 file <- '/Users/rachelhz/projects/food_environ_atlas_analysis/food_environment_atlas_2015.xls'
@@ -34,21 +138,59 @@ assistance <- read_excel(file, sheet = 'ASSISTANCE')
 head(assistance)
 ```
 
+### Function for plotting state-level data on maps
+
+For Molly:
+* Have ggmap installed and loaded (see top of notebook)
+* Use load_state_geo() to bring in state geo data
+* Join the state geo data with your data
+* Plot the data
+
 ```{r}
-#install.packages("ggmap", type = "source")
+# Function that loads in state lon/lat data
+load_state_geo <- function() {
+  # Bring in lat/long data by state name
+  state_geo <- map_data("state")
+  head(state_geo)
+  # Bring in state names and abbreviations
+  data(state)
+  state_abbrevs <- tibble(abb = state.abb, region = tolower(state.name))
+  # Merge to match state abbreviations with lat/long
+  state_df <- full_join(state_geo, state_abbrevs, by = "region")
+  return(state_df)
+}
+
+state_df <- load_state_geo()
+head(state_df)
 ```
 
 ```{r}
-### Plot by state ###
+# DOES NOT WORK, IGNORE!
 
-# Bring in lat/long data by state name
-state_geo <- map_data("state")
-head(state_geo)
-# Bring in state names and abbreviations
-data(state)
-state_abbrevs <- tibble(abb = state.abb, region = tolower(state.name))
-# Merge to match state abbreviations with lat/long
-state_df <- full_join(state_geo, state_abbrevs, by = "region")
+# Join feature_df into geo data, then plot 'feature_to_plot'
+# If you want the joined df, set return_df = TRUE
+join_plot_state <- function(state_df, feature_df, feature_to_plot, return_df = FALSE) {
+  state_feature <- full_join(state_df, feature_df, by = c('abb' = 'State'))
+  
+  ggplot(state_feature, aes(x = long, y = lat, fill = feature_to_plot, group = group)) + 
+    geom_polygon(color = "white") +
+    scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+    coord_fixed(1.3)
+  
+  #if(return_df == TRUE) {
+   # return(state_feature)
+  #}
+}
+
+join_plot_state(state_df, feature_df, PCT_SNAP14)
+```
+
+
+```{r}
+### Here is how to plot by state ###
+
+# Bring in state geo data
+state_df <- load_state_geo()
 
 # Summarize 'df' by State using 'group_by_function' on 'feature', then plot by state
 # Note: 'df' must have a column of state abbrevs called 'State'
@@ -57,8 +199,6 @@ assistance %>%
   group_by(State) %>% 
   summarise(summ_feature = mean(PCT_SNAP14)) ->
   feature_df
-
-##### look into heatmap
 
 state_feature <- full_join(state_df, feature_df, by = c('abb' = 'State'))
 
@@ -74,10 +214,11 @@ Use the package 'noncensus' has population and other relevant data for counties 
 ```{r}
 ### This didn't work and takes forever! ###
 # Try bringing in FIPS (county) level geo data
-require(noncensus)
+library(noncensus)
 
 data("zip_codes")
-zip_codes$fips <- as.character(zip_codes$fips)
+#zip_codes$fips <- as.character(zip_codes$fips)
+assistance$FIPS <- as.numeric(assistance$FIPS)
 assistance_zip <- full_join(zip_codes, select(assistance, FIPS, State, County, REDEMP_SNAPS12), by = c('fips' = 'FIPS'))
 
 # See if we can plot something by county
@@ -105,5 +246,183 @@ ggplot(assistance_county_geo, aes(x = longitude, y = latitude, fill = PC_SNAPBEN
   geom_polygon(color = "white") +
   scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
   coord_fixed(1.3)
+```
+
+### Compare per capita expenditures on: farm, fast food, restaurants, hh income
+
+```{r}
+file <- '/Users/rachelhz/projects/food_environ_atlas_analysis/fea_02182017.csv'
+fea <- read_csv(file)
+```
+
+Variables of interest:
+* PC_DIRSALES07: Direct farm sales per capita, 2007
+* PC_FFRSALES07: Expenditures per capita, fast food, 2007 (state level)
+* PC_FSRSALES07: Expenditures per capita, restaurants, 2007 (state level)
+* MEDHHINC10: Median household income, 2010
+
+```{r}
+fea_expend <- select(fea, FIPS, State, PC_DIRSALES07, PC_FFRSALES07, PC_FSRSALES07, MEDHHINC10)
+head(fea_expend)
+```
+
+```{r}
+library(GGally)
+# Note: this plot can be misleading because the fast food and restaurant sale data is by state
+ggpairs(select(fea_expend, PC_DIRSALES07, PC_FFRSALES07, PC_FSRSALES07, MEDHHINC10), mapping = aes(alpha = 0.5))
+```
+
+```{r}
+# There are only 50 states
+ggplot(fea_expend, aes(PC_FFRSALES07, PC_FSRSALES07)) + geom_point()
+```
+Overall, full-service restaurant expenditures seem to grow with fast food restaurant expenditures.
+
+```{r}
+library(gridExtra)
+grid.arrange(
+# Fast food expenditures by median hh income
+ggplot(fea_expend, aes(MEDHHINC10, PC_FFRSALES07)) + geom_point(size = 0.2, alpha = 0.5), 
+# Restaurant expenditures by median hh income
+ggplot(fea_expend, aes(MEDHHINC10, PC_FSRSALES07)) + geom_point(size = 0.2, alpha = 0.5), 
+nrow = 2)
+```
+Observations:
+* There seems to be a general range ($500-800) of per capita fast food expenditures that applies across the bulk of incomes.
+* There seems to be a general range ($400-900) of per capita restaurant expenditures that applies across most incomes.
+* Interesting that expenditures for eating out are pretty consistent across rich and poor counties/states.
+
+```{r}
+# Plot fast food expenditures on a map
+
+# Bring in state geo data
+state_df <- load_state_geo()
+
+# Summarize 'df' by State using 'group_by_function' on 'feature', then plot by state
+# Note: 'df' must have a column of state abbrevs called 'State'
+
+fea_expend %>% 
+  group_by(State) %>% 
+  summarise(PC_FFRSALES07 = mean(PC_FFRSALES07)) ->
+  feature_df
+
+state_feature <- full_join(state_df, feature_df, by = c('abb' = 'State'))
+
+ggplot(state_feature, aes(x = long, y = lat, fill = PC_FFRSALES07, group = group)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+  coord_fixed(1.3) + 
+  ggtitle('PC_FFRSALES07 by State')
+```
+
+```{r}
+# Plot restaurant expenditures on a map
+
+# Bring in state geo data
+state_df <- load_state_geo()
+
+# Summarize 'df' by State using 'group_by_function' on 'feature', then plot by state
+# Note: 'df' must have a column of state abbrevs called 'State'
+
+fea_expend %>% 
+  group_by(State) %>% 
+  summarise(PC_FSRSALES07 = mean(PC_FSRSALES07)) ->
+  feature_df
+
+state_feature <- full_join(state_df, feature_df, by = c('abb' = 'State'))
+
+ggplot(state_feature, aes(x = long, y = lat, fill = PC_FSRSALES07, group = group)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+  coord_fixed(1.3) + 
+  ggtitle('PC_FSRSALES07 by State')
+```
+
+```{r}
+# Plot hh median income on a map
+
+# Bring in state geo data
+state_df <- load_state_geo()
+
+# Summarize 'df' by State using 'group_by_function' on 'feature', then plot by state
+# Note: 'df' must have a column of state abbrevs called 'State'
+
+fea_expend %>% 
+  group_by(State) %>% 
+  summarise(MEDHHINC10_mean = mean(MEDHHINC10)) ->
+  feature_df
+
+state_feature <- full_join(state_df, feature_df, by = c('abb' = 'State'))
+
+ggplot(state_feature, aes(x = long, y = lat, fill = MEDHHINC10_mean, group = group)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+  coord_fixed(1.3) + 
+  ggtitle('MEDHHINC10_mean by State')
+```
+
+```{r}
+# Plot median hh income by county
+data("zip_codes")
+zip_codes$fips <- as.character(zip_codes$fips)
+joined_zip <- full_join(zip_codes, select(fea_expend, FIPS, MEDHHINC10), by = c('fips' = 'FIPS'))
+
+# See if we can plot something by county
+# Clearly, we're missing a lot of data
+ggplot(joined_zip, aes(x = longitude, y = latitude, fill = MEDHHINC10, group = fips)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
+  coord_fixed(1.3) + 
+  ggtitle('MEDHHINC10 by County')
+```
+
+```{r}
+# Bring in state geo data
+state_df <- load_state_geo()
+
+# Summarize 'df' by State using 'group_by_function' on 'feature', then plot by state
+# Note: 'df' must have a column of state abbrevs called 'State'
+
+fea_expend %>% 
+  group_by(State) %>% 
+  summarise(PC_DIRSALES07_mean = mean(PC_DIRSALES07)) ->
+  feature_df
+
+state_feature <- full_join(state_df, feature_df, by = c('abb' = 'State'))
+
+ggplot(state_feature, aes(x = long, y = lat, fill = PC_DIRSALES07_mean, group = group)) + 
+  geom_polygon(color = "white") +
+  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar") +
+  coord_fixed(1.3) + 
+  ggtitle('PC_DIRSALES07_mean by State')
+```
+
+Observations:
+* We have very little farm sales data, so we probably shouldn't use this information.
+
+### Correlation among socioeconomic variables, eg. race against poverty/income/metro, so that we can use a single factor in later analyses
+
+Socioeconomic variables:
+
+```{r, warning=FALSE}
+fea_socioecon <- select(fea, FIPS, State, PCT_NHWHITE10, PCT_NHBLACK10, PCT_HISP10, PCT_NHASIAN10, PCT_NHNA10, PCT_NHPI10, PCT_65OLDER10, PCT_18YOUNGER10, MEDHHINC10, POVRATE10, PERPOV10, CHILDPOVRATE10, PERCHLDPOV10, METRO13, POPLOSS00)
+
+# Plot race against income against metro area
+ggplot(fea_socioecon, aes(MEDHHINC10, POPLOSS00)) + geom_point(alpha = 0.5) + facet_wrap(~METRO13)
+```
+
+Observations (looking at % of category compared to median hh income):
+* Out of most races, only Asians seem to appear more in counties with higher median income
+* PCT_NHPI10: can remove, make up a low percentage of populations
+* PCT_18YOUNGER10: pretty uninformative
+* PCT_65OLDER10: not so informative either
+* POVRATE10, CHILDPOVRATE10: Poverty rate and child poverty rate are highly linearly related!; as expected, is nearly inversely related to MEDHHINC10
+  * most households under the poverty line have children
+* PERPOV10: exists for some counties on very low end of MEDHHINC10
+* PERCHLDPOV10: exists for a wider range of incomes, compared to PERPOV10, at the low end of the spectrum
+ * POPLOSS00: happens more for lower half end of MEDHHINC10
+
+```{r}
+ggplot(fea_socioecon, aes(POVRATE10, CHILDPOVRATE10)) + geom_point(alpha = 0.5)
 ```
 
