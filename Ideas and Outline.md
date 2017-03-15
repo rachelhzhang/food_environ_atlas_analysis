@@ -34,10 +34,13 @@
     - How to aggregate data (mean, median, etc.)
 - Time of collection for different variables don't always sync up
 - Remember the 2008-2009 recession!
+- Different households use SNAP in different ways
 
 ### Other data to find:
+- Food insecurity at county level
 - Population: total, children, seniors
 - ["noncensus"](https://cran.r-project.org/web/packages/noncensus/noncensus.pdf) package in R has useful state, county, and zip-level data!
+  - Be careful when merging by FIPS: numeric vs character data type
 - Can overlay data from Google Maps API: need to explore more, try to find "food deserts"
 
 ### We think not so related:
@@ -50,11 +53,42 @@
 - Compare percent change in population to restaurants / food resources
 - Compare percent change in median income to food insecurity
 - Compare percent change in median income to restaurants / food resources
+- SNAP Adequacy report
+  - Great frameworks, eg. p. 20 Figure 1-1
+  - WIC may be more important than SNAP
+- SNAP report March 2014
+  - Can we get this data?
+  - Great summary points, eg. Geographic access to food was generally not associated with the prevalence of food insecurity
+- SNAP eligibility and benefits: Who decides eligibility requirements?  Who decides household benefits?
+  - The relationship between: poverty, food security, and employment
 
 ### Other cool stuff:
 - Add government data / press releases and news articles to tell our story for the final presentation
 
-### To-do's for 2/28:
+### To-do's from 3/15:
+- Put together report outline
+  - S: 3. Analysis of Data Quality
+  - Contextual description: Where data comes from, composed of many data sources, many date ranges (hard for comparison), some state-level and some county-level data
+  - May need to look into other data sets to drill down into key areas (but we don't know if reporting methods are the same across data sets)
+  - Missing data analysis: by Excel tab
+  
+  - 4. Executive Summary (do after main analysis)
+  - General state of the US and a few specific states or trends
+  - Validation and criticism of USDA reports or of the programs
+  
+  - 5. Main Analysis
+  - Start general and drill down into details (try to use different types of plots, eg. scatterplot, boxplot, histogram, density plot, pair plot)
+    - M: This is the state of America, map state-level data over time, heatmap, on a map
+    - R: Comparison of 4 highest insecurity states against:
+      - rest of US
+      - all of US
+      - lowest insecurity states
+  - Analysis & evaluation of SNAP
+    - Program effectiveness
+    - Compare against WIC
+- S: Perform SNAP analyses, perform missing data analysis, upload notes to Github
+
+### To-do's from 2/28:
 - M, R: Zoom into the few states with high food insecurity
   - M: MS, AL; R: AR, TX
   - Look at which features correlate most with insecurity, then test on other states
@@ -63,7 +97,7 @@
 - S: Go through SNAP reports and find graphs/relationships for us to test against
 - R: figure out how to plot by county
 
-### To-do's for 2/24:
+### To-do's from 2/24:
 - R: Full join for only the vars we want, look at 'Questions'
 - S: Research SNAP, which vars should we look at
 - M: Look at 'Questions'
