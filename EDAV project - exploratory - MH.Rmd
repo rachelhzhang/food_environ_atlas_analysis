@@ -1,0 +1,213 @@
+---
+title: "food-atlas"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+full_df <- read_csv('fea_02182017.csv')
+```
+
+```{r}
+store_farm_df <- full_df %>% select(FIPS, State.x, County.x, GROCPTH07, GROCPTH12, SUPERCPTH07, SUPERCPTH12, FMRKTPTH09, FMRKTPTH13, FOODINSEC_07_09, FOODINSEC_10_12, VLFOODSEC_07_09, VLFOODSEC_10_12)
+
+ggplot(store_farm_df, aes(x=FOODINSEC_07_09, y=GROCPTH07, color=State.x)) + geom_point()
+ggplot(store_farm_df, aes(x=FOODINSEC_10_12, y=GROCPTH12, color=State.x)) + geom_point()
+
+insec_groc <- store_farm_df %>% select(FIPS, State.x, County.x, GROCPTH12, GROCPTH07, FOODINSEC_07_09, FOODINSEC_10_12) 
+insec_groc_tidy <- insec_groc %>% gather("Grocery_per_1000", "Value", -FIPS, -State.x, -County.x, -FOODINSEC_07_09, -FOODINSEC_10_12)
+
+
+store_farm_09 <- store_farm_df %>% select(FIPS, State.x, County.x, GROCPTH07, SUPERCPTH07, FMRKTPTH09, FOODINSEC_07_09, VLFOODSEC_07_09)
+store_farm_09_tidy <- store_farm_09 %>% gather("StoreType", "ValuePer1000", -FIPS, -State.x, -County.x,-FOODINSEC_07_09, -VLFOODSEC_07_09)
+
+store_farm_12 <- store_farm_df %>% select(FIPS, State.x, County.x, GROCPTH12, SUPERCPTH12, FMRKTPTH13, FOODINSEC_10_12, VLFOODSEC_10_12)
+store_farm_12_tidy <- store_farm_12 %>% gather("StoreType", "ValuePer1000", -FIPS, -State.x, -County.x,-FOODINSEC_10_12, -VLFOODSEC_10_12)
+
+##By food insecurity level, store types (07-09)
+ggplot(store_farm_09_tidy, aes(x=FOODINSEC_07_09, y=ValuePer1000, color=StoreType)) + geom_col()
+
+##Lots more grocery stores than Farmer Markets/Supercenters
+ggplot(store_farm_09_tidy, aes(x=StoreType, y=ValuePer1000, color=StoreType)) + geom_col()
+ggplot(store_farm_12_tidy, aes(x=StoreType, y=ValuePer1000, color=StoreType)) + geom_col()
+
+##Ask team - some sort of ratio comparision 
+store_farm_comp_12 <- store_farm_12 %>% mutate("Groc_Over_Farm" = GROCPTH12/FMRKTPTH13)
+
+##
+test <- store_farm_09_tidy %>% filter(StoreType=="FMRKTPTH09")
+ggplot(test, aes(x=FOODINSEC_07_09, y=ValuePer1000, color=StoreType)) + geom_col()
+
+```
+
+```{r}
+summarise_state_insec <- full_df %>% group_by(State.x) %>% summarise("Mean_Insec_07_09"=mean(FOODINSEC_07_09, na.rm=TRUE), "Mean_Insec_10_12"=mean(FOODINSEC_10_12, na.rm=TRUE), "Med_Insec_07_09"=median(FOODINSEC_07_09, na.rm=TRUE), "Med_Insec_10_12"=median(FOODINSEC_10_12, na.rm=TRUE)) %>% ungroup
+
+ggplot(summarise_state_insec, aes(x=State.x, y=Mean_Insec_07_09)) +geom_col() + coord_flip()
+ggplot(summarise_state_insec, aes(x=State.x, y=Med_Insec_07_09)) +geom_col() + coord_flip()
+ggplot(summarise_state_insec, aes(x=State.x, y=Med_Insec_10_12)) +geom_col() + coord_flip()
+
+
+```
+```{r}
+change_df <- full_df %>% select(FIPS, State.x, County.x, GROCPTH07, GROCPTH12, SUPERCPTH07, SUPERCPTH12, FOODINSEC_07_09, FOODINSEC_10_12, VLFOODSEC_07_09, VLFOODSEC_10_12, CH_FOODINSEC_09_12, CH_FOODINSEC_02_12, CH_VLFOODSEC_09_12, CH_VLFOODSEC_02_12, PCH_GROCPTH_07_12, PCH_FFRPTH_07_12, PCH_FSRPTH_07_12)
+
+##Grocery stores per thousand are not growing with the population (neg percentage change)
+##Some increase in full service restaurants
+hist(change_df$CH_FOODINSEC_09_12)
+hist(change_df$PCH_GROCPTH_07_12)
+hist(change_df$PCH_FFRPTH_07_12)
+hist(change_df$PCH_FSRPTH_07_12)
+
+
+```
+
+```{r}
+#Food Insec rank by State
+
+food_insec_df <- full_df %>% select(FIPS, State.x, County.x, FOODINSEC_07_09, FOODINSEC_10_12, VLFOODSEC_07_09, VLFOODSEC_10_12)
+
+food_insec_df_tidy <- food_insec_df %>% group_by(State.x) %>% 
+  summarise("FOOD-INSE-07-09-state"=mean(FOODINSEC_07_09, na.rm=TRUE), 
+            "FOOD-INSE-10-12-state"=mean(FOODINSEC_10_12, na.rm=TRUE)) %>% 
+  mutate("rank0709"=rank(`FOOD-INSE-07-09-state`), 
+         "rank1012"=rank(`FOOD-INSE-10-12-state`)) %>% ungroup()
+
+#Summary DF by state - FOR MAPPING??
+state_df <- full_df %>% select(FIPS, State.x, County.x,PCT_SNAP09, PCT_SNAP14, PCH_SNAP_09_14, SNAP_PART_RATE08,SNAP_PART_RATE10,SNAP_OAPP00,SNAP_OAPP05,SNAP_OAPP10,SNAP_FACEWAIVER00,SNAP_FACEWAIVER05,SNAP_FACEWAIVER10,SNAP_VEHEXCL00,SNAP_VEHEXCL05,SNAP_VEHEXCL10,SNAP_BBCE00,SNAP_BBCE05,SNAP_BBCE10,SNAP_REPORTSIMPLE00,SNAP_REPORTSIMPLE05,SNAP_REPORTSIMPLE10,FOODINSEC_00_02,FOODINSEC_07_09,FOODINSEC_10_12,CH_FOODINSEC_02_12,CH_FOODINSEC_09_12,VLFOODSEC_00_02,VLFOODSEC_07_09,VLFOODSEC_10_12,CH_VLFOODSEC_02_12,CH_VLFOODSEC_09_12,FOODINSEC_CHILD_01_07,FOODINSEC_CHILD_03_11,FOOD_TAX11,PC_FFRSALES02,PC_FFRSALES07,PC_FSRSALES02,PC_FSRSALES07) %>% group_by(State.x) %>% summarise(
+  "PCT_SNAP09"=mean(PCT_SNAP09, na.rm=TRUE),
+  "PCT_SNAP14"=mean(PCT_SNAP14, na.rm=TRUE),
+  "PCH_SNAP_09_14"=mean(PCH_SNAP_09_14, na.rm=TRUE),
+  "SNAP_PART_RATE08"=mean(SNAP_PART_RATE08, na.rm=TRUE),
+  "SNAP_PART_RATE10"=mean(SNAP_PART_RATE10, na.rm=TRUE),
+  "SNAP_OAPP00"=mean(SNAP_OAPP00, na.rm=TRUE),
+  "SNAP_OAPP05"=mean(SNAP_OAPP05, na.rm=TRUE),
+  "SNAP_OAPP10"=mean(SNAP_OAPP10, na.rm=TRUE),
+  "SNAP_FACEWAIVER00"=mean(SNAP_FACEWAIVER00, na.rm=TRUE),
+  "SNAP_FACEWAIVER05"=mean(SNAP_FACEWAIVER05, na.rm=TRUE),
+  "SNAP_FACEWAIVER10"=mean(SNAP_FACEWAIVER10, na.rm=TRUE),
+  "SNAP_VEHEXCL00"=mean(SNAP_VEHEXCL00, na.rm=TRUE),
+  "SNAP_VEHEXCL05"=mean(SNAP_VEHEXCL05, na.rm=TRUE),
+  "SNAP_VEHEXCL10"=mean(SNAP_VEHEXCL10, na.rm=TRUE),
+  "SNAP_BBCE00"=mean(SNAP_BBCE00, na.rm=TRUE),
+  "SNAP_BBCE05"=mean(SNAP_BBCE05, na.rm=TRUE),
+  "SNAP_BBCE10"=mean(SNAP_BBCE10, na.rm=TRUE),
+  "SNAP_REPORTSIMPLE00"=mean(SNAP_REPORTSIMPLE00, na.rm=TRUE),
+  "SNAP_REPORTSIMPLE05"=mean(SNAP_REPORTSIMPLE05, na.rm=TRUE),
+  "SNAP_REPORTSIMPLE10"=mean(SNAP_REPORTSIMPLE10, na.rm=TRUE),
+  "FOODINSEC_00_02"=mean(FOODINSEC_00_02, na.rm=TRUE),
+  "FOODINSEC_07_09"=mean(FOODINSEC_07_09, na.rm=TRUE),
+  "FOODINSEC_10_12"=mean(FOODINSEC_10_12, na.rm=TRUE),
+  "CH_FOODINSEC_02_12"=mean(CH_FOODINSEC_02_12, na.rm=TRUE),
+  "CH_FOODINSEC_09_12"=mean(CH_FOODINSEC_09_12, na.rm=TRUE),
+  "VLFOODSEC_00_02"=mean(VLFOODSEC_00_02, na.rm=TRUE),
+  "VLFOODSEC_07_09"=mean(VLFOODSEC_07_09, na.rm=TRUE),
+  "VLFOODSEC_10_12"=mean(VLFOODSEC_10_12, na.rm=TRUE),
+  "CH_VLFOODSEC_02_12"=mean(CH_VLFOODSEC_02_12, na.rm=TRUE),
+  "CH_VLFOODSEC_09_12"=mean(CH_VLFOODSEC_09_12, na.rm=TRUE),
+  "FOODINSEC_CHILD_01_07"=mean(FOODINSEC_CHILD_01_07, na.rm=TRUE),
+  "FOODINSEC_CHILD_03_11"=mean(FOODINSEC_CHILD_03_11, na.rm=TRUE),
+  "FOOD_TAX11"=mean(FOOD_TAX11, na.rm=TRUE),
+  "PC_FFRSALES02"=mean(PC_FFRSALES02, na.rm=TRUE),
+  "PC_FFRSALES07"=mean(PC_FFRSALES07, na.rm=TRUE),
+  "PC_FSRSALES02"=mean(PCT_SNAP09, na.rm=TRUE),
+  "PC_FSRSALES07"=mean(PC_FSRSALES07, na.rm=TRUE)
+) %>% filter(State.x!="PR") %>% ungroup()
+
+```
+
+
+```{r}
+##MS AL INVESTIGATION
+
+#High Food Insec
+MS_df <- full_df %>% filter(State.x=="MS")
+AL_df <- full_df %>% filter(State.x=="AL")
+high_df <- full_df %>% filter((State.x=="MS")|(State.x=="AR")|(State.x=="TX")|(State.x=="AL"))
+
+#Low Food Insec
+VA_df <- full_df %>% filter(State.x=="VA")
+NH_df <- full_df %>% filter(State.x=="NH")
+ND_df <- full_df %>% filter(State.x=="ND")
+low_df <- full_df %>% filter((State.x=="ND")|(State.x=="VA")|(State.x=="NH")|(State.x=="MN"))
+
+#One data set for all
+high_df <- high_df %>% mutate("Type"="High")
+low_df <- low_df %>% mutate("Type"="Low")
+total_df <- rbind(high_df, low_df)
+
+```
+
+
+```{r}
+#High insec states have higher child pov rates
+ggplot(total_df, aes(LACCESS_LOWI10, CHILDPOVRATE10, color=Type)) + geom_point() + scale_x_log10()
+
+
+ggplot(total_df, aes(REDEMP_SNAPS08, REDEMP_SNAPS12, color=Type)) + geom_point()
+
+#Weird trend...
+ggplot(total_df, aes(PCT_NHWHITE10, PCT_NHBLACK10, color=Type)) + geom_point()
+
+
+df_population <- total_df %>% select(70:79)
+total_df_edit <- total_df %>% select(-County, -State)
+
+#Issues with colors in the splom
+ggpairs(data=total_df_edit,
+             columns=70:77, 
+             upper = list(continuous = "density"),
+             lower = list(combo = "facetdensity"),
+             title="tips data",
+             ggplot2::aes(colour = "Type"))
+
+#Histograms of milk prices
+ggplot(total_df, aes(MILK_PRICE10)) + geom_histogram(binwidth = .05) + facet_wrap(~Type)
+
+#Histograms of population
+ggplot(total_df, aes(PCT_NHWHITE10)) + geom_histogram(binwidth = 10) + facet_wrap(~Type)
+ggplot(total_df, aes(PCT_NHBLACK10)) + geom_histogram(binwidth = 10) + facet_wrap(~Type)
+ggplot(total_df, aes(PCT_HISP10)) + geom_histogram(binwidth = 10) + facet_wrap(~Type)
+ggplot(total_df, aes(PCT_NHASIAN10)) + geom_histogram(binwidth = 10) + facet_wrap(~Type)
+ggplot(total_df, aes(PCT_NHNA10)) + geom_histogram(binwidth = 10) + facet_wrap(~Type)
+ggplot(total_df, aes(PCT_18YOUNGER10)) + geom_histogram(binwidth = 10) + facet_wrap(~Type)
+ggplot(total_df, aes(PCT_65OLDER10)) + geom_histogram(binwidth = 10) + facet_wrap(~Type)
+
+#Child poverty rate density plot 
+ggplot(total_df, aes(CHILDPOVRATE10, color= Type)) + geom_density()
+
+#Higher inaccesibility, younger people
+ggplot(total_df, aes(PCT_18YOUNGER10, color= Type)) + geom_density()
+
+#No visible difference in older people dist
+ggplot(total_df, aes(PCT_65OLDER10, color= Type)) + geom_density()
+
+#Low are largey white, high are more diverse
+ggplot(total_df, aes(PCT_NHWHITE10, color= Type)) + geom_density()
+
+#Low percentage of black population
+ggplot(total_df, aes(PCT_NHBLACK10, color= Type)) + geom_density()
+
+#PC SNAPBEN10 density 
+ggplot(total_df, aes(PC_SNAPBEN10, color= Type)) + geom_density()
+
+#Lower insecurity have higher median HHI
+ggplot(total_df, aes(MEDHHINC10, color= Type)) + geom_density()
+
+#increase in snap benefits among high and low
+df_snapben <- total_df %>% select(FIPS, State.x, County.x, PC_SNAPBEN08, PC_SNAPBEN10, Type) %>% gather("SnapYr", "PC_Benefit", -FIPS, -State.x, -County.x, -Type)
+ggplot(df_snapben, aes(PC_Benefit, color=SnapYr)) + geom_density() + facet_wrap(~Type)
+
+
+##Food taxes and median income, some of the high insecure states have high food tax
+ggplot(total_df, aes(MEDHHINC10, FOOD_TAX11, color=Type)) + geom_point()
+ggplot(total_df, aes(FOOD_TAX11, color= Type)) + geom_density()
+
+```
+
+MS Food Insecurity
+http://www.huffingtonpost.com/2014/03/25/hungriest-states_n_5028586.html
+http://www.rethinkms.org/2014/02/05/people-hungry-mississippi-else-hard-food-assistance/
+differences in SNAP benefits and eligibility, cuts in program
+
+
