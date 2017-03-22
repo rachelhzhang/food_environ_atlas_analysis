@@ -39,6 +39,7 @@
 ### Other data to find:
 - Food insecurity at county level
 - Population: total, children, seniors
+  - Supplemental Data - County: contains population estimates by country
 - ["noncensus"](https://cran.r-project.org/web/packages/noncensus/noncensus.pdf) package in R has useful state, county, and zip-level data!
   - Be careful when merging by FIPS: numeric vs character data type
 - Can overlay data from Google Maps API: need to explore more, try to find "food deserts"
@@ -65,6 +66,19 @@
 ### Other cool stuff:
 - Add government data / press releases and news articles to tell our story for the final presentation
 
+### To-do's from 3/22:
+- S: SNAP: Compare percent change in participation to percent change in population to participation/eligible (by state, across time) - parallel coordinate plot?
+- S: SNAP state comparisons: color by high vs low insecurity; add US median
+- S: Try Cleveland dot plot instead of heatmap
+- S: Do SNAP analyses on WIC
+- R: Plot by county (specifically MS); look into group
+- M: Look into what's going on with state tax rates, what foods are taxed
+- M: Write-up for homework 4
+- Everyone: Tidy up graphs
+- Put a few "middle insecurity" states into the analysis, since the extreme states might be weird
+- S: Send documentation to Joyce
+- S: Missing data analysis: by Excel tab
+
 ### To-do's from 3/15:
 - Put together report outline
   - S: 3. Analysis of Data Quality
@@ -75,9 +89,12 @@
   - 4. Executive Summary (do after main analysis)
   - General state of the US and a few specific states or trends
   - Validation and criticism of USDA reports or of the programs
+  - Explain what "food insecurity" means
+  - Explain SNAP, WIC programs
   
   - 5. Main Analysis
   - Start general and drill down into details (try to use different types of plots, eg. scatterplot, boxplot, histogram, density plot, pair plot)
+  - Use consistent colors
     - M: This is the state of America, map state-level data over time, heatmap, on a map
     - R: Comparison of 4 highest insecurity states against:
       - rest of US

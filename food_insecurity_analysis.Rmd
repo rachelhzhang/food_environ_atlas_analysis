@@ -18,16 +18,30 @@ fea <- read_csv('fea_02182017.csv')
 colnames(fea)
 ```
 
-AR and TX are two states with high food insecurity.  Look at these states and examine:
+Using FOODINSEC_10_12:
+* The 4 states with the highest food insecurity are: MS, AR, TX, AL
+* The 4 states with the lowest food insecurity are: ND, VA, NH, MN
+
+Look at the highest insecurity states and examine:
+* Comparisons against:
+  * lowest insecurity states
+  * rest of US
+  * all of US
 * Note: insecurity values are at the state level
 * Which features correlate most with insecurity
 * How insecurity and other variables vary at the county level
 
 ```{r}
-# Subset the data to only AR and/or TX
-fea_ARTX <- filter(fea, State == 'AR' | State == 'TX')
-fea_AR <- filter(fea, State == 'AR')
-fea_TX <- filter(fea, State == 'TX')
+# Subset the data to highest insecurity states, rest of US, and lowest insecurity states
+high_insecurity_states <- c('MS', 'AR', 'TX', 'AL')
+low_insecurity_states <- c('ND', 'VA', 'NH', 'MN')
+fea_high <- filter(fea, State %in% high_insecurity_states)
+fea_high$State <- paste('high', sep = '_', fea_high$State)
+fea_not_high <- filter(fea, !State %in% high_insecurity_states)
+fea_low <- filter(fea, State %in% low_insecurity_states)
+fea_low$State <- paste('low', sep = '_', fea_low$State)
+#fea_AR <- filter(fea, State == 'AR')
+#fea_TX <- filter(fea, State == 'TX')
 ```
 
 Plotting on map does not show enough differentiation between FIPS areas
@@ -46,72 +60,131 @@ ggplot(fea_AR_geo, aes(x = longitude, y = latitude, fill = GROCPTH12)) +
   coord_fixed(1.3)
 ```
 
-Use histograms to explore county-level data (PCT_LACCESS_POP10, PCT_LACCESS_LOWI10, REDEMP_SNAPS12, FFRPTH12, PCT_NHWHITE10, MEDHHINC10, METRO13, GROCPTH12, SUPERCPTH12)
 ```{r}
-ggplot(fea_ARTX, aes(MEDHHINC10, fill = State)) + geom_histogram()
+ggplot() + 
+  geom_density(data = fea_high, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
+  geom_density(data = fea, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
+  ggtitle('Median HH Income (County): Highest Food Insecurity States & US')
 ```
 
-Actually, it's more helpful to compare against the US (**or maybe top insecurity states vs lowest insecurity states**)
+```{r}
+ggplot() + 
+  geom_density(data = fea_low, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
+  geom_density(data = fea, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
+  ggtitle('Median HH Income (County): Lowest Food Insecurity States & US')
+```
 
-Look at food insecurity across time
+Look at food insecurity across time.  Remember, the recession put more households into food insecurity.  Also, the time gap is bigger between 00-02 and 07-09 than 07-09 and 10-12.
 
 ```{r}
 # Could tidy up the data to make this plot better
-# Note: jump in time between 00-02 and 07-09
 ggplot() + 
-  geom_point(data = fea_ARTX, aes(x = State, y = FOODINSEC_00_02), color = 'red') + 
+  geom_point(data = fea_high, aes(x = State, y = FOODINSEC_00_02), color = 'red') + 
   geom_boxplot(data = fea, aes(x = 'US 00-02', y = FOODINSEC_00_02), color = 'red') + 
-  geom_point(data = fea_ARTX, aes(x = State, y = FOODINSEC_07_09), color = 'green') + 
+  geom_point(data = fea_high, aes(x = State, y = FOODINSEC_07_09), color = 'green') + 
   geom_boxplot(data = fea, aes(x = 'US 07-09', y = FOODINSEC_07_09), color = 'green') + 
-  geom_point(data = fea_ARTX, aes(x = State, y = FOODINSEC_10_12), color = 'blue') + 
-  geom_boxplot(data = fea, aes(x = 'US 10-12', y = FOODINSEC_10_12), color = 'blue')
+  geom_point(data = fea_high, aes(x = State, y = FOODINSEC_10_12), color = 'blue') + 
+  geom_boxplot(data = fea, aes(x = 'US 10-12', y = FOODINSEC_10_12), color = 'blue') + 
+  ggtitle('Food Insecurity Rates (State)')
 ```
 
-### Other variables tried out (only showing graphs of interest):
-* Some differentiation: MEDHHINC10, POVRATE10, CHILDPOVRATE10, MILK_PRICE10 (sample size too small), FOOD_TAX11, PC_FFRSALES07, PC_FSRSALES07
-* No differentiation: PCT_LACCESS_POP10, PCT_LACCESS_LOWI10, REDEMP_SNAPS12, FFRPTH12, FSRPTH12, GROCPTH12, SUPERCPTH12, PCT_65OLDER10, PCT_18YOUNGER10, SNAPSPTH12
+### Other variables tried out:
+* Some association: MEDHHINC10, POVRATE10, CHILDPOVRATE10, MILK_PRICE10 (sample size too small), FOOD_TAX11, PC_FFRSALES07, PC_FSRSALES07
+* Not associated: PCT_LACCESS_POP10, PCT_LACCESS_LOWI10, REDEMP_SNAPS12, SNAPSPTH12, FFRPTH12, FSRPTH12, GROCPTH12, SUPERCPTH12, CONVSPTH12, PCT_65OLDER10, PCT_18YOUNGER10
 
 ```{r}
 ggplot() + 
-  geom_boxplot(data = fea_ARTX, aes(x = State, y = MEDHHINC10)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = MEDHHINC10))
-```
-
-```{r}
-ggplot() + 
-  geom_boxplot(data = fea_ARTX, aes(x = State, y = POVRATE10)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = POVRATE10))
-```
-
-```{r}
-ggplot() + 
-  geom_boxplot(data = fea_ARTX, aes(x = State, y = CHILDPOVRATE10)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = CHILDPOVRATE10))
-```
-
-```{r}
-# Can use diverging color scheme / stacked bar chart for above/below
-ggplot() + 
-  geom_point(data = fea_ARTX, aes(x = State, y = MILK_PRICE10)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = MILK_PRICE10))
+  geom_boxplot(data = fea_high, aes(x = State, y = MEDHHINC10)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = MEDHHINC10)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = MEDHHINC10)) +
+  geom_boxplot(data = fea, aes(x = 'US', y = MEDHHINC10)) + 
+  ggtitle('Median HH Income (County)')
 ```
 
 ```{r}
 ggplot() + 
-  geom_point(data = fea_ARTX, aes(x = State, y = FOOD_TAX11)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = FOOD_TAX11))
+  geom_boxplot(data = fea_high, aes(x = State, y = POVRATE10)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = POVRATE10)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = POVRATE10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = POVRATE10)) + 
+  ggtitle('Poverty Rate (County)')
 ```
 
 ```{r}
 ggplot() + 
-  geom_point(data = fea_ARTX, aes(x = State, y = PC_FFRSALES07)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = PC_FFRSALES07))
+  geom_boxplot(data = fea_high, aes(x = State, y = CHILDPOVRATE10)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = CHILDPOVRATE10)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = CHILDPOVRATE10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = CHILDPOVRATE10)) + 
+  ggtitle('Child Poverty Rate (County)')
+```
+
+```{r}
+# Can use diverging color scheme / stacked bar chart for above/below - can't figure out
+ggplot() + 
+  geom_point(data = fea_high, aes(x = State, y = MILK_PRICE10)) + 
+  geom_point(data = fea_low, aes(x = State, y = MILK_PRICE10)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = MILK_PRICE10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = MILK_PRICE10)) + 
+  ggtitle('Price of low-fat milk / national average (Region)') + 
+  coord_flip()
+# scale_color_manual(name = "ratio", values = c("[0, 1]" = "yellow", "(1,2]" = "red"), labels = c("< 1", "> 1"))
 ```
 
 ```{r}
 ggplot() + 
-  geom_point(data = fea_ARTX, aes(x = State, y = PC_FSRSALES07)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = PC_FSRSALES07))
+  geom_point(data = fea_high, aes(x = State, y = FOOD_TAX11)) + 
+  geom_point(data = fea_low, aes(x = State, y = FOOD_TAX11)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = FOOD_TAX11)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = FOOD_TAX11)) + 
+  ggtitle('General food sales tax (State)')
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = fea_high, aes(x = State, y = PC_FFRSALES07)) + 
+  geom_point(data = fea_low, aes(x = State, y = PC_FFRSALES07)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = PC_FFRSALES07)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = PC_FFRSALES07)) + 
+  ggtitle('Per Capita Fast Food Restaurant Expenditures (State)')
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = fea_high, aes(x = State, y = PC_FSRSALES07)) + 
+  geom_point(data = fea_low, aes(x = State, y = PC_FSRSALES07)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = PC_FSRSALES07)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = PC_FSRSALES07)) + 
+  ggtitle('Per Capita Full Service Restaurant Expenditures (State)')
+```
+
+The following do not seem to be associated with food insecurity.
+
+```{r}
+ggplot() + 
+  geom_boxplot(data = fea_high, aes(x = State, y = PCT_LACCESS_POP10)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = PCT_LACCESS_POP10)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = PCT_LACCESS_POP10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = PCT_LACCESS_POP10)) + 
+  ggtitle('Low Access to Store (%) (County)')
+```
+
+```{r}
+ggplot() + 
+  geom_boxplot(data = fea_high, aes(x = State, y = PCT_LACCESS_LOWI10)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = PCT_LACCESS_LOWI10)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = PCT_LACCESS_LOWI10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = PCT_LACCESS_LOWI10)) + 
+  ggtitle('Low Income & Low Access to Store (%) (County)')
+```
+
+```{r}
+ggplot() + 
+  geom_boxplot(data = fea_high, aes(x = State, y = REDEMP_SNAPS12)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = REDEMP_SNAPS12)) + 
+  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = REDEMP_SNAPS12)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = REDEMP_SNAPS12)) + 
+  ggtitle('SNAP redemptions / SNAP-authorized stores (County)')
 ```
 
 ### Older stuff
