@@ -46,7 +46,7 @@ summarise_state_insec <- full_df %>% group_by(State.x) %>% summarise("Mean_Insec
 ggplot(summarise_state_insec, aes(x=State.x, y=Mean_Insec_07_09)) +geom_col() + coord_flip()
 ggplot(summarise_state_insec, aes(x=State.x, y=Med_Insec_07_09)) +geom_col() + coord_flip()
 ggplot(summarise_state_insec, aes(x=State.x, y=Med_Insec_10_12)) +geom_col() + coord_flip()
-
+ 
 
 ```
 ```{r}
