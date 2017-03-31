@@ -66,6 +66,16 @@
 ### Other cool stuff:
 - Add government data / press releases and news articles to tell our story for the final presentation
 
+### To-do's from 3/31:
+- S: Data quality (missing data analysis)
+- S: Analysis of WIC (similar to SNAP), and compare SNAP vs WIC in terms of effectiveness
+- S: Pull out relevant USDA bullet points for executive summary
+- M: Cleveland dot plot for state comparisons (for different time frames)
+- M: Write up on "regressive tax", executive summary
+- R: Pull together all main analysis plots for US, state, and county level (walk through as a story)
+  - Include "if poverty and food insecurity correlated" scatterplot
+  - Convert all maps to choroplethr
+
 ### To-do's from 3/22:
 - S: SNAP: Compare percent change in participation to percent change in population to participation/eligible (by state, across time) - parallel coordinate plot?
 - S: SNAP state comparisons: color by high vs low insecurity; add US median
