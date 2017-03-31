@@ -6,6 +6,7 @@ output: html_document
 library(tidyverse)
 library(lubridate)
 full_df <- read_csv('fea_03262017.csv')
+
 ```
 
 ```{r}
