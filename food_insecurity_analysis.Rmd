@@ -10,13 +10,232 @@ library(readxl)
 library(ggplot2)
 #install.packages("ggmap", type = "source")
 library(ggmap)
+library(choroplethr)
+library(choroplethrMaps)
+```
+
+### Note: I'm removing PR from the start
+```{r}
+# Read in data
+fea <- read_csv('fea_04062017.csv')
+fea <- filter(fea, State != "PR")
+# For county plotting purposes
+fea$region <- as.numeric(fea$FIPS)
+#colnames(fea)
+```
+
+As our project focuses on Food Insecurity in the US, the first variable(s) we will begin to analyze are those related to food insecurity. The documentation defines household food insecurity as those households which “were unable, at times during the year, to provide adequate food for one or more household members because the household lacked money and other resources for food.” The documentation adds that this inadequacy was in both “quality and variety of foods”. Households with very low food insecurity are categorized as households where “food intake of one or more members was reduced and eating patterns were disrupted at times during the year because of insufficient money and other resources for food.”
+
+Note: Food insecurity data is at the state level
+
+#### Do we want to talk about "very low food insecurity"?
+
+```{r}
+fea %>% 
+  group_by(State) %>% 
+  summarise_all(mean) -> 
+  state_data
+
+# Bring in state abbreviation to name mapping
+data(state)
+state_abbrevs <- tibble(abb = state.abb, region = tolower(state.name))
+state_abbrevs <- add_row(state_abbrevs, abb = 'DC', region = 'district of columbia')
+
+state_data <- left_join(state_data, state_abbrevs, by = c('State' = 'abb'))
+
+##### How to plot panel of FOODINSEC_07_09 and FOODINSEC_10_12?
+##### Set a manual scale
+
+par(mfrow = c(1, 2))
+state_choropleth(mutate(state_data, value = FOODINSEC_07_09), title = "Household Food Insecurity (%), 2007-2009")
+state_choropleth(mutate(state_data, value = FOODINSEC_10_12), title = "Household Food Insecurity (%), 2010-2012")
+```
+
+The below charts explore average food insecurity for 2007-2009 and 2010-2012 by state. Here we see the range of percent of households experiencing food insecurity is increasing: from 07-09 the range was 6.7-17.7%, whereas from 10-12 the range was 8.7-20.9%.
+
+```{r}
+# Cleveland dot plot theme
+theme_dotplot1 <- theme_bw(10) +
+    theme(axis.text.y = element_text(size = rel(.8)),
+          axis.ticks.y = element_blank(),
+          axis.title.x = element_text(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(size = 0.5),
+          panel.grid.minor.x = element_blank())
+```
+
+
+```{r}
+insec_bar <- state_data %>% select(State, FOODINSEC_07_09, FOODINSEC_10_12)
+
+ggplot(insec_bar, aes(x = reorder(State, FOODINSEC_07_09), y = FOODINSEC_07_09)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("Household food insecurity by state (%, 3-year avg) - 2007-2009") +
+    ylab("Household food insecurity (%, 3-year avg)") + xlab("")
 ```
 
 ```{r}
-# Read in data
-fea <- read_csv('fea_02182017.csv')
-colnames(fea)
+ggplot(insec_bar, aes(x = reorder(State, FOODINSEC_10_12), y = FOODINSEC_10_12)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("Household food insecurity by state (%, 3-year avg) - 2010-2012") +
+    ylab("Household food insecurity (%, 3-year avg)") + xlab("")
 ```
+
+```{r}
+insec_bar_tidy <- insec_bar %>% gather("Year", "Value", -State)
+
+ggplot(insec_bar_tidy, aes(x = reorder(State, Value), y = Value, color = Year)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("Household food insecurity by state (%, 3-year avg) - 2007-09 vs. 2010-12") +
+    ylab("Household food insecurity (%, 3-year avg)") + xlab("")
+```
+
+
+
+We'll use this information to create subsets of the US, with Mississippi, Arkansas, Texas, and Alabama comprising the "high" food insecurity states, and North Dakota, Virginia, New Hampshire, and Minnesota making up the "low" food insecurity states.
+```{r}
+high_insecurity_states <- c('MS', 'AR', 'TX', 'AL')
+low_insecurity_states <- c('ND', 'VA', 'NH', 'MN')
+fea_high <- filter(fea, State %in% high_insecurity_states)
+fea_high$State <- paste('high', sep = '_', fea_high$State)
+fea_low <- filter(fea, State %in% low_insecurity_states)
+fea_low$State <- paste('low', sep = '_', fea_low$State)
+```
+
+## Let's explore variables that may be associated with food insecurity
+
+### Median household income
+
+We expect median household incomes to be low in areas of high food insecurity and high in areas of low food insecurity. The below graphs look at county median household income across the US, and focuses in on states with the highest and lowest food insecurity rates.
+```{r}
+county_choropleth(mutate(fea, value = MEDHHINC10), title = 'Median Household Income by County (2010)')
+# + scale_fill_brewer(palette = "Greens") # Alaska and Hawaii are still blue
+```
+
+```{r}
+ggplot() + 
+  geom_density(data = fea_high, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
+  geom_density(data = fea, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
+  xlab('Median Household Income (County)') +
+  ggtitle('Median Household Income (County): \n Highest Food Insecurity States & US (2010)') + 
+  scale_x_continuous(labels = scales::dollar)
+```
+
+```{r}
+ggplot() + 
+  geom_density(data = fea_low, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
+  geom_density(data = fea, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
+  xlab('Median Household Income (County)') +
+  ggtitle('Median Household Income (County): \n Lowest Food Insecurity States & US (2010)') + 
+  scale_x_continuous(labels = scales::dollar)
+```
+
+As expected, county median household incomes for highly food insecure states are lower than for the US as a whole, while low food insecurity states have incomes distributed higher than for the US in general.
+
+### Poverty
+
+Similarly, we can examine the relationship between the county-level poverty rate and state-level food insecurity rate.  The poverty rate is defined as the percentage of county residents with household income below the poverty threshold, and the child poverty rate is defined as the percentage of county residents under age 18 living in households with income below the poverty threshold.
+
+```{r}
+ggplot(fea, aes(x = POVRATE10, FOODINSEC_10_12)) + geom_point(alpha = 0.5) + 
+  xlab('Poverty Rate (%)') + 
+  ylab('Food Insecurity (%)') + 
+  ggtitle("State Food Insecurity % (2010-2012 Avg) vs County Poverty Rate (2010), \n with Median") + 
+  geom_vline(xintercept = median(fea$POVRATE10, na.rm = TRUE), linetype = 'longdash')
+```
+
+```{r}
+ggplot(fea, aes(x = CHILDPOVRATE10, FOODINSEC_10_12)) + geom_point(alpha = 0.5) + 
+  xlab('Child Poverty Rate (%)') + 
+  ylab('Food Insecurity (%)') + 
+  ggtitle("State Food Insecurity % (2010-2012 Avg) vs County Child Poverty Rate (2010), \n with Median") + 
+  geom_vline(xintercept = median(fea$CHILDPOVRATE10, na.rm = TRUE), linetype = 'longdash')
+```
+
+Plotting state-level against county-level data makes understanding the true relationship between food insecurity and poverty difficult, especially because variance of poverty rates can be high within a state. Nevertheless, we can see that there is somewhat of a positive association between food insecurity with poverty and child poverty rates.  Also, the states with highest food insecurity tend to have the majority of county poverty rates above the US county median.
+
+### Access to food
+
+Part of our initial hypothesis was that food insecurity is related to low access to food. The dataset defines low access to store (%) as the “percentage of people in a county living more than 1 mile from a supermarket, supercenter or large grocery store if in an urban area, or more than 10 miles from a supermarket or large grocery store if in a rural area.” Is low store access more of an issue in counties with high food insecurity?
+
+```{r}
+ggplot() + 
+  geom_boxplot(data = fea_high, aes(x = State, y = PCT_LACCESS_POP10)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = PCT_LACCESS_POP10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = PCT_LACCESS_POP10)) + 
+  ylab('% Low Access to Store (County)') + 
+  ggtitle('Low Access to Store (%) (County), with US Median (2010)') + 
+  geom_hline(yintercept = median(fea$PCT_LACCESS_POP10, na.rm = TRUE), linetype = 'longdash')
+```
+
+From the above graph with multiple box plots, low access to store does not appear to be associated with food insecurity. In fact, at least half of the counties in AL, AR, and MS have low store access numbers lower than the US county median, while a higher proportion of people in MN and ND, where food insecurity is low, live far from stores. This suggests that physical access to stores is not a main factor related to food insecurity.
+
+### Other
+
+```{r}
+state_choropleth(mutate(state_data, value = FOOD_TAX11), title = "General Food Sales Tax (2011)")
+```
+
+It's ironic that 3 of the 4 states (AL, AR, MS) with the highest food insecurity rates levy a general food sales tax, while most states in the US do not have a general food sales tax.  Is this tax related to food insecurity, and if so, is this a chicken-and-egg problem?
+
+```{r}
+# Can use diverging color scheme / stacked bar chart for above/below - can't figure out
+ggplot() + 
+  geom_point(data = fea_high, aes(x = State, y = MILK_PRICE10)) + 
+  geom_point(data = fea_low, aes(x = State, y = MILK_PRICE10)) + 
+  geom_boxplot(data = fea, aes(x = 'US', y = MILK_PRICE10)) + 
+  ggtitle('Price of low-fat milk / national average (Region)') + 
+  coord_flip()
+# scale_color_manual(name = "ratio", values = c("[0, 1]" = "yellow", "(1,2]" = "red"), labels = c("< 1", "> 1"))
+```
+
+## Diving into states
+
+
+
+
+
+
+
+```{r}
+# Isolate the extremes/outliers
+county_choropleth(mutate(fea, value = POVRATE10), state_zoom = c('north dakota', 'virginia', 'new hampshire', 'minnesota', 'mississippi', 'arkansas', 'texas', 'alabama'), title = 'Poverty Rate (2010), Highest and Lowest Food Insecurity States')
+```
+
+```{r}
+# Isolate the extremes/outliers
+county_choropleth(mutate(fea, value = PC_SNAPBEN10), state_zoom = c('north dakota', 'virginia', 'new hampshire', 'minnesota', 'mississippi', 'arkansas', 'texas', 'alabama'), title = 'SNAP benefits per capita (2010), Highest and Lowest Food Insecurity States')
+##### Make NA's gray
+```
+
+```{r}
+county_choropleth(mutate(fea, value = POVRATE10), state_zoom = c('mississippi', 'arkansas', 'texas', 'alabama'), title = 'Poverty Rate (2010), High Food Insecurity States')
+```
+
+```{r}
+county_choropleth(mutate(fea, value = PC_SNAPBEN10), state_zoom = c('mississippi', 'arkansas', 'texas', 'alabama'), title = 'SNAP benefits per capita (2010), High Food Insecurity States')
+##### Make NA a different color
+```
+
+```{r}
+### Can I change color?
+county_choropleth(mutate(fea, value = POVRATE10), state_zoom = "mississippi", title = 'Poverty Rate (2010) by County for Mississippi')
+```
+
+```{r}
+county_choropleth(mutate(fea, value = PC_SNAPBEN10), state_zoom = "mississippi", title = 'SNAP benefits per capita (2010) for Mississippi')
+```
+
+It looks like SNAP benefits are used in high poverty counties, which means that food assistance money is going to areas that need it.
+
+
+## Old stuff below
 
 Using FOODINSEC_10_12:
 * The 4 states with the highest food insecurity are: MS, AR, TX, AL
@@ -37,41 +256,9 @@ high_insecurity_states <- c('MS', 'AR', 'TX', 'AL')
 low_insecurity_states <- c('ND', 'VA', 'NH', 'MN')
 fea_high <- filter(fea, State %in% high_insecurity_states)
 fea_high$State <- paste('high', sep = '_', fea_high$State)
-fea_not_high <- filter(fea, !State %in% high_insecurity_states)
+fea_not_high <- filter(fea, !State %in% high_insecurity_states)  # Not low either?
 fea_low <- filter(fea, State %in% low_insecurity_states)
 fea_low$State <- paste('low', sep = '_', fea_low$State)
-#fea_AR <- filter(fea, State == 'AR')
-#fea_TX <- filter(fea, State == 'TX')
-```
-
-Plotting on map does not show enough differentiation between FIPS areas
-
-```{r}
-library(noncensus)
-data("zip_codes")
-#zip_codes$fips <- as.character(zip_codes$fips)
-head(zip_codes)
-fea_AR$FIPS <- as.numeric(fea_AR$FIPS)
-fea_AR_geo <- left_join(fea_AR, zip_codes, by = c('FIPS' = 'fips'))
-
-ggplot(fea_AR_geo, aes(x = longitude, y = latitude, fill = GROCPTH12)) + 
-  geom_polygon(color = "white") +
-  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar") +
-  coord_fixed(1.3)
-```
-
-```{r}
-ggplot() + 
-  geom_density(data = fea_high, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
-  geom_density(data = fea, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
-  ggtitle('Median HH Income (County): Highest Food Insecurity States & US')
-```
-
-```{r}
-ggplot() + 
-  geom_density(data = fea_low, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
-  geom_density(data = fea, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
-  ggtitle('Median HH Income (County): Lowest Food Insecurity States & US')
 ```
 
 Look at food insecurity across time.  Remember, the recession put more households into food insecurity.  Also, the time gap is bigger between 00-02 and 07-09 than 07-09 and 10-12.
@@ -119,26 +306,9 @@ ggplot() +
   ggtitle('Child Poverty Rate (County)')
 ```
 
-```{r}
-# Can use diverging color scheme / stacked bar chart for above/below - can't figure out
-ggplot() + 
-  geom_point(data = fea_high, aes(x = State, y = MILK_PRICE10)) + 
-  geom_point(data = fea_low, aes(x = State, y = MILK_PRICE10)) + 
-  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = MILK_PRICE10)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = MILK_PRICE10)) + 
-  ggtitle('Price of low-fat milk / national average (Region)') + 
-  coord_flip()
-# scale_color_manual(name = "ratio", values = c("[0, 1]" = "yellow", "(1,2]" = "red"), labels = c("< 1", "> 1"))
-```
 
-```{r}
-ggplot() + 
-  geom_point(data = fea_high, aes(x = State, y = FOOD_TAX11)) + 
-  geom_point(data = fea_low, aes(x = State, y = FOOD_TAX11)) + 
-  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = FOOD_TAX11)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = FOOD_TAX11)) + 
-  ggtitle('General food sales tax (State)')
-```
+
+
 
 ```{r}
 ggplot() + 
@@ -159,15 +329,6 @@ ggplot() +
 ```
 
 The following do not seem to be associated with food insecurity.
-
-```{r}
-ggplot() + 
-  geom_boxplot(data = fea_high, aes(x = State, y = PCT_LACCESS_POP10)) + 
-  geom_boxplot(data = fea_low, aes(x = State, y = PCT_LACCESS_POP10)) + 
-  geom_boxplot(data = fea_not_high, aes(x = 'rest of US', y = PCT_LACCESS_POP10)) + 
-  geom_boxplot(data = fea, aes(x = 'US', y = PCT_LACCESS_POP10)) + 
-  ggtitle('Low Access to Store (%) (County)')
-```
 
 ```{r}
 ggplot() + 
