@@ -66,6 +66,17 @@
 ### Other cool stuff:
 - Add government data / press releases and news articles to tell our story for the final presentation
 
+### To-do's from 4/7:
+- ***Pull in new data uploaded by Sanjmeet
+- S: Talk about main points of USDA report for our executive summary ("USDA says this": "confirmed/denied/etc" (part 4)
+- S: Compare SNAP vs WIC, why they are different, then dig into SNAP's effectiveness
+  - SNAP vs WIC comparisons (use same y-axis): compare SNAP vs WIC and facet by time; compare 2008 vs 2010/2012 and facet by program; can use color to make readable
+- S: Data quality analysis (part 3)
+- R: choropleth graphs: set common scale
+- R: diving into states: show 4 high and 4 low, then 4 high, show the worst state (MS)
+- R: Compile all the graphs (Cleveland dot plots from Molly, SNAP vs WIC from Sanjmeet) (part 5)
+- M: Put together write-up for first part (parts 1, 2, 4, 5 - what didn't work: most variables didn't work (eg. farm variables), missing data, county vs state level variables, we did more of variable interpretation than cleaning)
+  
 ### To-do's from 3/31:
 - S: Data quality (missing data analysis)
 - S: Analysis of WIC (similar to SNAP), and compare SNAP vs WIC in terms of effectiveness
