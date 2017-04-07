@@ -1,6 +1,6 @@
 library(tidyverse)
 library(readxl)
-file <- '/Users/rachelhz/projects/food_environ_atlas_analysis/food_environment_atlas_2015.xls'
+file <- '/home/sanjmeet/food_environ_atlas_analysis/food_environment_atlas_2015.xls'
 
 ########## Bring in data from all tabs ##########
 access <- read_excel(file, sheet = 'ACCESS')
@@ -16,7 +16,7 @@ variable_list <- read_excel(file, sheet = 'Variable List')
 
 ########## Reduce to desired variables for certain tables ##########
 # May want to reduce assistance_cols further
-assistance_cols <- filter(variable_list, `Category Code` == 'ASSISTANCE', `Sub Category` == 'SNAP')$`Variable Code`
+assistance_cols <- filter(variable_list, `Category Code` == 'ASSISTANCE', `Sub Category` == 'SNAP'| `Sub Category` == 'WIC')$`Variable Code`
 assistance <- assistance[ , c('FIPS', assistance_cols)]
 
 local_cols <- c('FIPS', 'FMRKTPTH09', 'FMRKTPTH13', 'PCH_FMRKTPTH_09_13', 'PC_DIRSALES07')
@@ -47,4 +47,5 @@ all_data <- full_join(all_data, stores, by = 'FIPS')
 all_data <- unique(all_data)
 
 ########## Write joined data to csv ##########
-write_csv(all_data, '/Users/rachelhz/projects/food_environ_atlas_analysis/fea_03262017.csv')
+write.csv(all_data, file = '/home/sanjmeet/food_environ_atlas_analysis/fea_04062017.csv')
+
