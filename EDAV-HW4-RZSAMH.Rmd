@@ -5,24 +5,25 @@ output:
   html_notebook: default
 ---
 
-  Team Members: Sanjmeet Abrol (sa3424), Molly Hanson (meh2243), Rachel Zhang (rhz2106)
+  Team Members: Sanjmeet Abrol (sa3424), Molly Hanson (meh2243), Rachel Zhang (rhz2106) 
+  
   Team Name: RZSAMH
   
   **1.[10 points] Write a DRAFT introduction. (It will likely change by the time you submit the final project.)** 
 
-*Why did we chose this topic?*
+*Why did we choose this topic?*
 
-  After reviewing the USDA website and noticing that their reports were all textual with no vizualisations, we wanted to provided a supplementary perspective and more comprehensive view on the Food Atlas data set. Additionally, we wanted to use our new exploratory data analysis and visualization toolkit to validate the facts that are claimed in their reports. 
+  After reviewing the USDA website and noticing that their reports were all textual with no visualizations, we want to provide a supplementary perspective and more comprehensive view on the Food Atlas data set. Additionally, we want to use our new exploratory data analysis and visualization toolkit to validate the facts that are claimed in their reports. 
   
-  On a more general note, we are interested in gaining a deeper understanding of food insecurity as it is broad and quite loosely defined. Our goal is to help provide a more concrete definition of food insecurity, leading to greater clarity. Under this goal, we seek to examine the differences between food insecurity and poverty, as well as the other variables included in this expansive data set.
+  On a more general note, we are interested in gaining a deeper understanding of food insecurity as a broad term that is often and loosely defined. Our goal is to help provide a more concrete definition of food insecurity, leading to greater clarity. Under this goal, we seek to examine the differences between food insecurity and poverty, as well as the other variables included in this expansive data set.
   
 *What questions are we interested in answering?* 
 
-  As noted in the above section, we are interested in seeing in confirming the USDA's conclusions and statments they make on their site.  We plan to do this by observing trends across factors taht affect food insecurity, and assess the effectiveness of various programs that have been implemented to improve these issues. Through exploratory data analysis and presentation techiques, we seek to asses which variables do or do not relate to food insecurity.
+  As noted in the above section, we are interested in evaluating the USDA's conclusions and statements they make on their site.  We plan to do this by observing trends across factors that affect food insecurity, and assess the effectiveness of federal supplementary nutrition and food programs that have been implemented to improve these issues. Through exploratory data analysis and presentation techniques, we seek to assess which variables do or do not relate to food insecurity.
 
 *How did you find the data?*
 
-While looking for interesting data sets, Rachel discovered this data set.  A couple features of the data set that stood out were US county level data for most of the variables and the same variables measured over different time lines.  Sanjmeet and Molly shared interest in this data set based on their interestes in social programs and sustanability. 
+Rachel found this data set on [data.gov](data.gov) while searching for interesting, impactful data sets.  A couple features of the data set that stood out were US county level data for most of the variables and the same variables measured over different time lines.  Sanjmeet and Molly shared interest in this data set based on their interests in social programs and sustainability. 
 
 *Where can the reader find this data?*
   
@@ -36,20 +37,26 @@ Collectively we've met throughout the semester discussing ideas and initial expl
 
   As we now have a sound focus and structure for our final project, we have divided up our work as follows:
    
-* Sanjmeet is looking into the quality of data (missing data points, assessing differences in timeframes, variables calculated on a state-wide basis vs. county-level detail), and effectiveness of current programs to combat food insecurity in the US (SNAP, WIC)
+* Sanjmeet is looking into the quality of data (missing data points, assessing differences in time frames, variables calculated on a state-wide basis vs. county-level detail), and effectiveness of current programs to combat food insecurity in the US (SNAP, WIC)
 * Rachel is focusing on comparing variables between high, low, and average food insecure states, as well as mapping county-level data 
-* Molly is working on the overall narative, including visualizing state-wide variables to set the tone for the overall picture of US food insecurity, outside reserach into different variables and general commentary  
+* Molly is working on the overall narrative, including visualizing state-wide variables to set the tone for the overall picture of US food insecurity, outside research into different variables and general commentary  
 
   **3. [30 points] Choose four variables that you consider to be important and begin analyzing them, following the advice in Chapter 8, sections 1 & 2, of Graphical Data Analysis with R, to begin by summarizing and plotting individual variables. Histograms and bar charts work well for this purpose, but you can use whatever techniques you find appropriate.**
   
-  1. As our project focuses on Food Insecurity in the US, the first variable(s) we will begin to analyze are those related to **food insecurity**.  Note, the below code uses the cleaned data set as mentioned in question 1.  The variables considered here are the three-year average of household food insecurity (%), and very low food security (%). Both variables have been calculated for 2000-2002, 2007-2009 and 2010-2012. These are all state level variable and we have used both bar charts and heatmaps of the US to analyze these variables.
+  1. As our project focuses on Food Insecurity in the US, the first variable(s) we will begin to analyze are those related to **food insecurity**. The documentation defines household food insecurity as those households which "were unable, at times during the year, to provide adequate food for one or more household members because the household lacked money and other resources for food." The documentation adds that this inadequacy was in both "quality and variety of foods". Households with very low food insecurity are categorized as households where "food intake of one or more members was reduced and eating patterns were disrupted at times during the year because of insufficient money and other resources for food." 
+
+  Note, the below code uses the cleaned data set as mentioned in question 1.  The variables considered here are the three-year average of household food insecurity (%), and very low food security (%). Both variables have been provided for 2007-2009 and 2010-2012. We have used both bar charts and heat maps of the US to analyze these state level variables. The maps below, which compare average household food insecurity from 2007-09 and 2010-12, show increasing food insecurity in the South.
   
   
 ```{r}
 library(tidyverse)
 library(lubridate)
 library(dplyr)
-full_df <- read_csv('fea_02182017.csv')
+library(readxl)
+library(ggplot2)
+library(ggmap)
+
+full_df <- read_csv('fea_03262017.csv')
 
 #Summary DF by state - FOR MAPPING
 state_data <- full_df %>% select(FIPS, State.x, County.x,PCT_SNAP09, PCT_SNAP14, PCH_SNAP_09_14, SNAP_PART_RATE08,SNAP_PART_RATE10,SNAP_OAPP00,SNAP_OAPP05,SNAP_OAPP10,SNAP_FACEWAIVER00,SNAP_FACEWAIVER05,SNAP_FACEWAIVER10,SNAP_VEHEXCL00,SNAP_VEHEXCL05,SNAP_VEHEXCL10,SNAP_BBCE00,SNAP_BBCE05,SNAP_BBCE10,SNAP_REPORTSIMPLE00,SNAP_REPORTSIMPLE05,SNAP_REPORTSIMPLE10,FOODINSEC_00_02,FOODINSEC_07_09,FOODINSEC_10_12,CH_FOODINSEC_02_12,CH_FOODINSEC_09_12,VLFOODSEC_00_02,VLFOODSEC_07_09,VLFOODSEC_10_12,CH_VLFOODSEC_02_12,CH_VLFOODSEC_09_12,FOODINSEC_CHILD_01_07,FOODINSEC_CHILD_03_11,FOOD_TAX11,PC_FFRSALES02,PC_FFRSALES07,PC_FSRSALES02,PC_FSRSALES07) %>% group_by(State.x) %>% summarise(
@@ -92,6 +99,8 @@ state_data <- full_df %>% select(FIPS, State.x, County.x,PCT_SNAP09, PCT_SNAP14,
   "PC_FSRSALES07"=mean(PC_FSRSALES07, na.rm=TRUE)
 ) %>% filter(State.x!="PR") %>% ungroup()
 
+```
+```{r}
  ##### Code for drawing maps
 library(ggmap)
 library(RColorBrewer)
@@ -110,34 +119,9 @@ load_state_geo <- function() {
 
 state_df <- load_state_geo()
 state_feature <- full_join(state_df, state_data, by = c('abb' = 'State.x'))
-
-## Insecurity over time - US Map
-insec_data <- state_feature %>% select(lat, long, group, order, region, abb, FOODINSEC_00_02, FOODINSEC_07_09, FOODINSEC_10_12) %>% gather("Year","Value", -lat, -long, -group, -order, -region, -abb)
-
-ggplot(insec_data, aes(x = long, y = lat, fill = Value, group = group)) + 
-  geom_polygon(color = "white") +
-  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
-  coord_fixed(1.3)+
-  theme_bw() +
-  facet_wrap(~Year) +
-  ggtitle("Food Insecurity in USA (2000-2012)") +
-  labs(x="",y="")
-
- ## Very Low Insecurity over time - US Map
-vl_insec_data <- state_feature %>% select(lat, long, group, order, region, abb, VLFOODSEC_00_02, VLFOODSEC_07_09, VLFOODSEC_10_12) %>% gather("Year","Value", -lat, -long, -group, -order, -region, -abb)
-
-ggplot(vl_insec_data, aes(x = long, y = lat, fill = Value, group = group)) + 
-  geom_polygon(color = "white") +
-  scale_fill_continuous(low = "#fee5d9", high = "#a50f15", guide="colorbar")+
-  coord_fixed(1.3)+
-  theme_bw() +
-  facet_wrap(~Year) +
-  ggtitle("Very Low Food Insecurity in USA (2000-2012)") +
-  labs(x="",y="")
-
 ```
-  
-  Due to the inconsistent date ranges, the below graphs only include the 2007-2009 and 2010-2012 features. It was important to remove the 2000-2002 data from this comparision as it is not a linear comparision and the above graphs may lead readers to make false conclusions regarding the worsening of food insecurity in the US.  In the below graphs with only 2 time frames, we see increasing food insecurity in the South.
+
+
   
 ```{r}
 ## Insecurity over time - 07-09/10-12
@@ -149,8 +133,9 @@ ggplot(insec_data_2, aes(x = long, y = lat, fill = Value, group = group)) +
   coord_fixed(1.3)+
   theme_bw() +
   facet_wrap(~Year) +
-  ggtitle("Food Insecurity in USA (2007-09 vs. 2010-12)") +
-  labs(x="",y="")
+  ggtitle("Household Food Insecurity (%), 3-Year Averages") +
+  labs(x="",y="") +
+  scale_y_discrete() + scale_x_discrete()
 
  ## Very Low Insecurity over time - 07-09/10-12
 vl_insec_data_2 <- state_feature %>% select(lat, long, group, order, region, abb, VLFOODSEC_07_09, VLFOODSEC_10_12) %>% gather("Year","Value", -lat, -long, -group, -order, -region, -abb)
@@ -161,37 +146,116 @@ ggplot(vl_insec_data_2, aes(x = long, y = lat, fill = Value, group = group)) +
   coord_fixed(1.3)+
   theme_bw() +
   facet_wrap(~Year) +
-  ggtitle("Very Low Food Insecurity in USA (2007-09 vs. 2010-12)") +
-  labs(x="",y="")
+  ggtitle("Very Low Household Food Insecurity (%), 3-Year Averages") +
+  labs(x="",y="") +
+  scale_y_discrete() + scale_x_discrete()
 ```
   
-  The below bar charts explore the variables FOODINSEC_07_09 and FOODINSEC_10_12 by state. Here we see the range of % of households experiencing food insecurity is increasing: from 07-09 the range was 6.7-17.7%, whereas from 10-12 the range was 8.7.20.9%. 
+  The below bar charts explore the variables FOODINSEC_07_09 and FOODINSEC_10_12 by state. Here we see the range of % of households experiencing food insecurity is increasing: from 07-09 the range was 6.7-17.7%, whereas from 10-12 the range was 8.7-20.9%. 
   
 
 ```{r}
 insec_bar <- state_data %>% select(State.x, FOODINSEC_07_09, FOODINSEC_10_12) 
+insec_bar_tidy <- insec_bar %>% gather("Year","Value",-State.x)
 
-ggplot(insec_bar, aes(x=reorder(State.x,FOODINSEC_07_09), y=FOODINSEC_07_09)) + 
-  geom_col() + 
-  coord_flip() +
-  labs(x="State", y="Household food insecurity (%, 3-year avg)") +
-  ggtitle("Household food insecurity by state (%, 3-year avg) - 2007-2009")
+# ggplot(insec_bar, aes(x=reorder(State.x,FOODINSEC_07_09), y=FOODINSEC_07_09)) + 
+#   geom_col() + 
+#   coord_flip() +
+#   labs(x="State", y="Household food insecurity (%, 3-year avg)") +
+#   ggtitle("Household food insecurity by state (%, 3-year avg) - 2007-2009")+
+#   theme_bw(8)
+# 
+# ggplot(insec_bar, aes(x=reorder(State.x,FOODINSEC_10_12), y=FOODINSEC_10_12)) + 
+#   geom_col() + 
+#   coord_flip() +
+#   labs(x="State", y="Household food insecurity (%, 3-year avg)") +
+#   ggtitle("Household food insecurity by state (%, 3-year avg) - 2010-2012")+
+#   theme_bw(8)
 
-ggplot(insec_bar, aes(x=reorder(State.x,FOODINSEC_10_12), y=FOODINSEC_10_12)) + 
-  geom_col() + 
-  coord_flip() +
-  labs(x="State", y="Household food insecurity (%, 3-year avg)") +
-  ggtitle("Household food insecurity by state (%, 3-year avg) - 2010-2012")
+#Profs online example
+theme_dotplot <- theme_bw(8) +
+    theme(axis.text.y = element_text(size = rel(.75)),
+          axis.ticks.y = element_blank(),
+          axis.title.x = element_text(size = rel(.75)),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(size = 0.5),
+          panel.grid.minor.x = element_blank())
+
+theme_dotplot1 <- theme_bw(10) +
+    theme(axis.text.y = element_text(size = rel(.8)),
+          axis.ticks.y = element_blank(),
+          axis.title.x = element_text(),
+          # axis.text = element_text(face = "bold"),
+          # panel.grid.major.x = element_line(size = 0.5),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(size = 0.5),
+          panel.grid.minor.x = element_blank())
+
+#Profs in class example
+theme_dotplot2 <- theme_bw(18) +
+    theme(axis.text.y = element_text(size = rel(.8)),
+          axis.ticks.y = element_blank(),
+          axis.title.x = element_text(),
+          axis.text = element_text(face = "bold"),
+          plot.background = element_rect(fill = "lightcyan2"),
+          panel.background = element_rect(fill = "moccasin"),
+          panel.grid.major.x = element_line(size = 0.5),
+          panel.grid.major.y = element_line(size = 0.5, color = "lightblue"),
+          panel.grid.minor.x = element_blank(),
+          strip.text = element_text(size = rel(.7)),
+          legend.position = "top")
+
+ggplot(insec_bar, aes(x=reorder(State.x,FOODINSEC_07_09), y=FOODINSEC_07_09)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("Household food insecurity by state (%, 3-year avg) - 2007-2009") +
+    ylab("Household food insecurity (%, 3-year avg)") + xlab("")
+
+#Sort by value, so order changes from the 2 graphs 
+ggplot(insec_bar, aes(x=reorder(State.x,FOODINSEC_10_12), y=FOODINSEC_10_12)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("Household food insecurity by state (%, 3-year avg) - 2010-2012") +
+    ylab("Household food insecurity (%, 3-year avg)") + xlab("")
+
+ggplot(insec_bar_tidy, aes(x=reorder(State.x,Value), y=Value, color=Year)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("Household food insecurity by state (%, 3-year avg) - 2007-09 vs. 2010-12") +
+    ylab("Household food insecurity (%, 3-year avg)") + xlab("")
+
 
 ```
   
-2. Our inital thought was that food insecurity was related to **low access** to food.
-  
-3. Since one of our objectives it to assess the effectiveness of the current programs to help improve food insecurity issues, we explored some of the **SNAP related variables**. First we used a bar chart to look at the each state's rank by percentage change in SNAP participation. Interestingly, ND was the only state that saw a decrease in SNAP participation over this timeframe.
+2. Our initial thought was that food insecurity was related to **low access** to food. The dataset defines low access to store (%) as the "percentage of people in a county living more than 1 mile from a supermarket, supercenter or large grocery store if in an urban area, or more than 10 miles from a supermarket or large grocery store if in a rural area."  Is low store access more of an issue in counties with high food insecurity?
 
-  As we also have information on SNAP participants as a percentage of eligible participants within a state, we also plotted this to observe differences in ranking. One observation is that FL is tied for the highest rank in percent change in SNAP participation, however when looking at SNAP participation as a percent of the elible population, FL is among the lowest participation rates. 
+```{r}
+high_insecurity_states <- c('MS', 'AR', 'TX', 'AL')
+low_insecurity_states <- c('ND', 'VA', 'NH', 'MN')
+fea_high <- filter(full_df, State %in% high_insecurity_states)
+fea_high$State <- paste('high', sep = '_', fea_high$State)
+fea_low <- filter(full_df, State %in% low_insecurity_states)
+fea_low$State <- paste('low', sep = '_', fea_low$State)
+
+ggplot() + 
+  geom_boxplot(data = fea_high, aes(x = State, y = PCT_LACCESS_POP10)) + 
+  geom_boxplot(data = fea_low, aes(x = State, y = PCT_LACCESS_POP10)) + 
+  geom_boxplot(data = full_df, aes(x = 'US', y = PCT_LACCESS_POP10)) + 
+  ggtitle('Low Access to Store (%) (County), with US Median - 2010') + 
+  geom_hline(yintercept = median(full_df$PCT_LACCESS_POP10, na.rm = TRUE), linetype = 'longdash')+ 
+  ylab('% Low Access to Store (County)')
+```
+
+  From the above graph with multiple box plots, low access to store does not appear to be associated with food insecurity.  In fact, at least half of the counties in AL, AR, and MS have low store access numbers lower than the US county median, while a higher proportion of people in MN and ND, where food insecurity is low, live far from stores.  This suggests that physical access to stores is not a main factor related to food insecurity.
   
-  In our final report, we plan to look into documentation and articles about the SNAP program, to highlight differences (if any) between states.  
+3. Since one of our objectives is to assess the effectiveness of the current programs to help improve food insecurity issues, we explored some of the **SNAP related variables**. First we used a bar chart to look at each state's rank by percentage change in SNAP participation. Interestingly, ND was the only state that saw a decrease in SNAP participation over this time frame.
+
+  As we also have information on SNAP participants as a percentage of eligible participants within a state, we also plotted this to observe differences in ranking. One observation is that FL is tied for the highest rank in percent change in SNAP participation, however when looking at SNAP participation as a percent of the eligible population, FL is among the lowest participation rates. 
+  
+  In our final report, we plan to look into documentation and articles about the SNAP program, to highlight differences (if any) in the effectiveness of SNAP within and between states.  
   
 
 ```{r}
@@ -205,22 +269,82 @@ df_SNAP_state <- df_SNAP_statevar %>%
   summarise(PCH_SNAP_09_14=min(PCH_SNAP_09_14),SNAP_PART_RATE08=min(SNAP_PART_RATE08),
             SNAP_PART_RATE10=min(SNAP_PART_RATE10))
 
-ggplot(df_SNAP_state,aes(x=reorder(State.x,+PCH_SNAP_09_14),y=df_SNAP_state$PCH_SNAP_09_14)) + 
-  geom_bar(stat="identity",color="black",fill="thistle") + 
-  coord_flip() + 
-  ylab("%change in avg monthly population receiving SNAP benefits [2008-12]") + 
-  xlab("State") + 
-  ggtitle("State Rankings by percent change in SNAP participation (2008 to 2012)")
+df_SNAP_state_tidy <- df_SNAP_state %>% gather("Variable","Value",-State.x)
 
+# ggplot(df_SNAP_state,aes(x=reorder(State.x,+PCH_SNAP_09_14),y=df_SNAP_state$PCH_SNAP_09_14)) + 
+#   geom_bar(stat="identity",color="black",fill="thistle") + 
+#   coord_flip() + 
+#   ylab("%change in avg monthly population receiving SNAP benefits [2008-12]") + 
+#   xlab("State") + 
+#   ggtitle("State Rankings by percent change in SNAP participation (2008 to 2012)")+
+#   theme_bw(8)
+# 
+# 
+# ggplot(df_SNAP_state,aes(x=reorder(State.x,+df_SNAP_state$SNAP_PART_RATE08),y=df_SNAP_state$SNAP_PART_RATE08)) + 
+#   geom_bar(stat="identity",color="black",fill="lightblue") + 
+#   coord_flip() + 
+#   ylab("SNAP participants (% eligible pop), 2008") + 
+#   xlab("State") + 
+#   ggtitle("State Rankings by SNAP participation as a percentage of eligible population")+
+#   theme_bw(8)
 
-ggplot(df_SNAP_state,aes(x=reorder(State.x,+df_SNAP_state$SNAP_PART_RATE08),y=df_SNAP_state$SNAP_PART_RATE08)) + 
-  geom_bar(stat="identity",color="black",fill="lightblue") + 
-  coord_flip() + 
-  ylab("SNAP participants (% eligible pop), 2008") + 
-  xlab("State") + 
-  ggtitle("State Rankings by SNAP participation as a percentage of eligible population")
+##Cleveland Dot Plots
+ggplot(df_SNAP_state, aes(x=reorder(State.x,PCH_SNAP_09_14), y=PCH_SNAP_09_14)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("State Rankings by percent change in SNAP participation (2008 to 2012)") +
+    ylab("%change in avg monthly population receiving SNAP benefits [2008-12]") + xlab("")
+
+ggplot(df_SNAP_state, aes(x=reorder(State.x,SNAP_PART_RATE08), y=SNAP_PART_RATE08)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("State Rankings by SNAP participation as a percentage of eligible population") +
+    ylab("SNAP participants (% eligible pop), 2008") + xlab("")
+
+##This graph needs to be reworked 
+ggplot(df_SNAP_state_tidy, aes(x=reorder(State.x,Value), y=Value, color=Variable)) +
+    geom_point() + 
+    theme_dotplot1 + 
+    coord_flip() +
+    ggtitle("SNAP participants - % of total pop vs. eligible pop") +
+    ylab("% of Population (total or eligible)") + xlab("")
+
 ```
   
   
-4. **Median Income** was another variable we wanted to explore
+4. **Median Income** was another variable we wanted to explore. We expected median household incomes to be low in areas of high food insecurity and high in areas of low food insecurity.  The below graphs look at county median household income across the US, and focuses in on states with the highest and lowest food insecurity rates.
+
+  
+```{r}
+
+library(choroplethr)
+library(choroplethrMaps)
+library(scales)
+
+fea_plot <- full_df
+fea_plot$region <- as.numeric(fea_plot$FIPS)
+fea_plot$value <- fea_plot$MEDHHINC10
+
+county_choropleth(fea_plot, title = 'Median Household Income by County - 2010')
+
+ggplot() + 
+  geom_density(data = fea_high, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
+  geom_density(data = full_df, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
+  ggtitle('Median Household Income (County): \n Highest Food Insecurity States & US - 2010') + 
+  xlab('Median Household Income (County)')+
+  scale_x_continuous(labels=dollar)
+
+ggplot() + 
+  geom_density(data = fea_low, aes(MEDHHINC10, color = State, fill = State), alpha = 0.1) + 
+  geom_density(data = full_df, aes(MEDHHINC10, color = 'US', fill = 'US'), alpha = 0.1) + 
+  ggtitle('Median Household Income (County): \n Lowest Food Insecurity States & US - 2010') + 
+  xlab('Median Household Income (County)')+
+  scale_x_continuous(labels=dollar)
+
+```
+  
+  As expected, county median household incomes for highly food insecure states are lower than for the US as a whole, while low food insecurity states have incomes distributed higher than for the US in general.
+  
 
