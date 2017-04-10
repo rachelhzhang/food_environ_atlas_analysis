@@ -66,6 +66,10 @@
 ### Other cool stuff:
 - Add government data / press releases and news articles to tell our story for the final presentation
 
+### Professor's comments:
+- I'm not sure how the data is divided between the upper two and lower two maps: if the upper ones are the higher range of food insecurity (8-20) and the lower maps are the lower range (3-8), then why are all the states shaded in both sets of maps?
+- The chloropleth map looks great. For presentation, it would be better to use round numbers in the legend.
+
 ### To-do's from 4/7:
 - ***Pull in new data uploaded by Sanjmeet
 - S: Talk about main points of USDA report for our executive summary ("USDA says this": "confirmed/denied/etc" (part 4)
